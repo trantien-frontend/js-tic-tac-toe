@@ -39,17 +39,17 @@ function toggleCurrentTurn() {
 }
 function updateGameStaus(status) {
   const statusElement = getGameStatusElement();
-  if (statusElement) statusElement.textContent = status.status;
+  if (statusElement) statusElement.textContent = status;
 }
 function showReplayButton() {
   const replayButtonElement = getReplayButton();
   if (replayButtonElement) replayButtonElement.classList.add('show');
-  replayButtonElement.addEventListener('click', () => handleReplayButton);
 }
-function handleReplayButton() {
-  cellValues = new Array(9).fill('');
-  isGameEnded = false;
+function hideReplayButton() {
+  const replayButtonElement = getReplayButton();
+  if (replayButtonElement) replayButtonElement.classList.remove('show');
 }
+
 function hightLightWinCell(winPositions) {
   if (!Array.isArray(winPositions) || winPositions.length !== 3) return;
   for (const win of winPositions) {
@@ -68,18 +68,18 @@ function handleCellClick(cell, index) {
   //check status game
   cellValues[index] = cell.className === TURN.CROSS ? GAME_STATUS.X_WIN : GAME_STATUS.O_WIN;
   const statusMatch = checkGameStatus(cellValues);
-  console.log(statusMatch.status);
+
   switch (statusMatch.status) {
     case GAME_STATUS.ENDED: {
       showReplayButton();
-      updateGameStaus(statusMatch);
+      updateGameStaus(statusMatch.status);
       isGameEnded = true;
       break;
     }
     case GAME_STATUS.X_WIN:
     case GAME_STATUS.O_WIN: {
       showReplayButton();
-      updateGameStaus(statusMatch);
+      updateGameStaus(statusMatch.status);
       hightLightWinCell(statusMatch.winPositions);
       isGameEnded = true;
       break;
@@ -94,6 +94,30 @@ function InitCellElementList() {
     cell.addEventListener('click', () => handleCellClick(cell, index));
   });
 }
+function resetGame() {
+  // rs - current turn
+  currentTurn = TURN.CROSS;
+  const currentTurnElement = getCurrentTurnElement();
+  currentTurnElement.classList.remove(TURN.CROSS, TURN.CIRCLE);
+  currentTurnElement.classList.add(currentTurn);
+  // rs - isGameEnded
+  isGameEnded = false;
+  // rs - game
+  cellValues = cellValues.map(() => '');
+  // rs - status game
+  updateGameStaus(GAME_STATUS.PLAYING);
+  //   rs - cellList
+  const cellElementList = getCellElementList();
+  cellElementList.forEach((cell) => (cell.className = ''));
+  //   rs - replay - btn
+  hideReplayButton();
+}
+function InitReplayButton() {
+  const replayButtonElement = getReplayButton();
+  if (!replayButtonElement) return;
+  replayButtonElement.addEventListener('click', resetGame);
+}
 (() => {
   InitCellElementList();
+  InitReplayButton();
 })();
