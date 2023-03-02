@@ -3,6 +3,7 @@ import {
   getCellElementAtIdx,
   getCurrentTurnElement,
   getGameStatusElement,
+  getReplayButton,
 } from './selectors.js';
 import { TURN, GAME_STATUS } from './constants.js';
 import { checkGameStatus } from './utils.js';
@@ -36,15 +37,30 @@ function toggleCurrentTurn() {
   currentTurnElement.classList.remove(TURN.CROSS, TURN.CIRCLE);
   currentTurnElement.classList.add(currentTurn);
 }
-function changeGameStatus(status) {
+function updateGameStaus(status) {
   const statusElement = getGameStatusElement();
-  statusElement.textContent = status.status;
+  if (statusElement) statusElement.textContent = status.status;
+}
+function showReplayButton() {
+  const replayButtonElement = getReplayButton();
+  if (replayButtonElement) replayButtonElement.classList.add('show');
+  replayButtonElement.addEventListener('click', () => handleReplayButton);
+}
+function handleReplayButton() {
+  cellValues = new Array(9).fill('');
+  isGameEnded = false;
+}
+function hightLightWinCell(winPositions) {
+  if (!Array.isArray(winPositions) || winPositions.length !== 3) return;
+  for (const win of winPositions) {
+    const cellElement = getCellElementAtIdx(win);
+    cellElement.classList.add('win');
+  }
 }
 function handleCellClick(cell, index) {
   // Check class cell
-  if (cell.className === TURN.CROSS || cell.className === TURN.CIRCLE) return;
   if (isGameEnded) return;
-
+  if (cell.className === TURN.CROSS || cell.className === TURN.CIRCLE) return;
   //   set cross || circle for cell
   cell.classList.add(currentTurn);
   //   toggle Current Turn
@@ -52,8 +68,25 @@ function handleCellClick(cell, index) {
   //check status game
   cellValues[index] = cell.className === TURN.CROSS ? GAME_STATUS.X_WIN : GAME_STATUS.O_WIN;
   const statusMatch = checkGameStatus(cellValues);
-  //   change Element Game Status
-  changeGameStatus(statusMatch);
+  console.log(statusMatch.status);
+  switch (statusMatch.status) {
+    case GAME_STATUS.ENDED: {
+      showReplayButton();
+      updateGameStaus(statusMatch);
+      isGameEnded = true;
+      break;
+    }
+    case GAME_STATUS.X_WIN:
+    case GAME_STATUS.O_WIN: {
+      showReplayButton();
+      updateGameStaus(statusMatch);
+      hightLightWinCell(statusMatch.winPositions);
+      isGameEnded = true;
+      break;
+    }
+    default:
+    // playing
+  }
 }
 function InitCellElementList() {
   const cellElementList = getCellElementList();
